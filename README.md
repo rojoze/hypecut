@@ -53,7 +53,7 @@ git clone https://github.com/rojoze/hypecut && cd hypecut
 pip install -e ".[all]"
 ```
 
-`[all]` pulls in yt-dlp, chat-downloader and faster-whisper.
+`[all]` installs yt-dlp, chat-downloader and faster-whisper. On a brand-new Python (3.14) where faster-whisper has no wheels yet, use `pip install -e ".[download,chat]"` and run with `--no-captions`, or use Python 3.12.
 
 Minimal install (local files only, no captions): `pip install -e .`
 
