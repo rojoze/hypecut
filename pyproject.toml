@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hypecut"
+version = "0.1.0"
+description = "Find the hype moments in long gaming VODs and auto-cut them into vertical, captioned clips."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+download = ["yt-dlp>=2024.1.0"]
+chat = ["chat-downloader>=0.2.8"]
+captions = ["faster-whisper>=1.0.0"]
+all = ["yt-dlp>=2024.1.0", "chat-downloader>=0.2.8", "faster-whisper>=1.0.0"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+hypecut = "hypecut.cli:main"
+
+[tool.setuptools]
+packages = ["hypecut"]
