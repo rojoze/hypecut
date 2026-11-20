@@ -42,7 +42,7 @@ clips/
 - `--layout facecam --facecam 1500:40:380:260`: the streamer's cam on top and gameplay below (the classic streamer clip). The box is `x:y:w:h` in source pixels.
 
 ### Captions
-Local Whisper (`faster-whisper`) with word timestamps. Lines are 2–3 words, uppercase, with a yellow karaoke highlight and a pop-in. Change the font with `--font`, the model with `--whisper-model` (tiny → large-v3), and force a language with `--language sv`.
+Local Whisper (`faster-whisper`) with word timestamps. Lines are 2–3 words, uppercase, with a yellow karaoke highlight and a pop-in. Change the font with `--font`, the model with `--whisper-model` (tiny → large-v3), and force a language with `--language sv`. Whisper runs on CPU by default. Use `--whisper-device cuda` only if you have NVIDIA CUDA 12 + cuDNN 9 installed, otherwise it can hang on Windows. If captions are slow, `--whisper-model base` is about 3x faster.
 
 ## Install
 

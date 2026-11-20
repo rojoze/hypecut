@@ -16,18 +16,27 @@ class Word:
 _model_cache: dict = {}
 
 
-def transcribe(audio_path: str | Path, model_size: str = "small", language: str | None = None) -> list[Word]:
+def transcribe(
+    audio_path: str | Path,
+    model_size: str = "small",
+    language: str | None = None,
+    device: str = "cpu",
+    log=print,
+) -> list[Word]:
     """Transcribe with faster-whisper (runs locally, CPU is fine for short clips)."""
     try:
         from faster_whisper import WhisperModel  # type: ignore
     except ImportError as e:
         raise RuntimeError("Captions need faster-whisper: pip install 'hypecut[captions]'") from e
-    if model_size not in _model_cache:
-        _model_cache[model_size] = WhisperModel(model_size, device="auto", compute_type="int8")
-    model = _model_cache[model_size]
+    key = (model_size, device)
+    if key not in _model_cache:
+        log(f"  loading whisper '{model_size}' on {device} (first run downloads the model, can take a few min)")
+        compute = "float16" if device == "cuda" else "int8"
+        _model_cache[key] = WhisperModel(model_size, device=device, compute_type=compute)
+    model = _model_cache[key]
     segments, _ = model.transcribe(str(audio_path), word_timestamps=True, language=language, vad_filter=True)
     words: list[Word] = []
-    for seg in segments:
+    for seg in segments:  # generator: actual decoding happens here
         for w in seg.words or []:
             t = w.word.strip()
             if t:

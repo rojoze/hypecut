@@ -54,6 +54,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--zoom", type=float, default=1.0, help="zoom gameplay in blur layout (e.g. 1.3)")
     r.add_argument("--no-captions", action="store_true")
     r.add_argument("--whisper-model", default="small", help="tiny / base / small / medium / large-v3")
+    r.add_argument("--whisper-device", choices=["cpu", "cuda", "auto"], default="cpu",
+                   help="cpu is safest; cuda needs NVIDIA CUDA 12 + cuDNN 9 installed")
     r.add_argument("--language", help="force caption language, e.g. en, sv")
     r.add_argument("--font", default="Montserrat Black")
     r.add_argument("--fps", type=int, default=30)
@@ -72,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
         opts.layout, opts.facecam, opts.zoom = args.layout, args.facecam, args.zoom
         opts.captions = not args.no_captions
         opts.whisper_model, opts.language, opts.font, opts.fps = args.whisper_model, args.language, args.font, args.fps
+        opts.whisper_device = args.whisper_device
     try:
         run(args.input, args.out, opts, render_clips=args.cmd == "run")
     except HypeCutError as e:

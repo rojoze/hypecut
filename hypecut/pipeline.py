@@ -31,6 +31,7 @@ class Options:
     zoom: float = 1.0
     captions: bool = True
     whisper_model: str = "small"
+    whisper_device: str = "cpu"
     language: str | None = None
     font: str = "Montserrat Black"
     fps: int = 30
@@ -126,7 +127,10 @@ def run(src: str, out_dir: str | Path, opts: Options, render_clips: bool = True)
                 wav = out / f"{name}.wav"
                 render.extract_audio(video, m.start, m.duration, wav)
                 try:
-                    words = captions.transcribe(wav, opts.whisper_model, opts.language)
+                    t0 = time.time()
+                    log("  transcribing for captions...")
+                    words = captions.transcribe(wav, opts.whisper_model, opts.language, opts.whisper_device, log)
+                    log(f"  transcribed {len(words)} words ({time.time()-t0:.1f}s)")
                     if words:
                         ass = captions.build_ass(words, out / f"{name}.ass", font=opts.font)
                         entry["transcript"] = " ".join(w.text for w in words)
@@ -136,10 +140,13 @@ def run(src: str, out_dir: str | Path, opts: Options, render_clips: bool = True)
                 finally:
                     wav.unlink(missing_ok=True)
             mp4 = out / f"{name}.mp4"
+            t0 = time.time()
+            log(f"  rendering {mp4.name} ({opts.layout} layout)...")
             render.render_clip(
                 video, m.start, m.duration, mp4, layout=opts.layout, facecam=opts.facecam,
                 zoom=opts.zoom, ass_path=ass, has_audio=info["has_audio"], fps=opts.fps,
             )
+            log(f"  rendered ({time.time()-t0:.1f}s)")
             render.thumbnail(mp4, out / f"{name}.jpg", at=min(m.peak - m.start, m.duration - 0.5))
             entry["file"] = mp4.name
             entry["thumbnail"] = f"{name}.jpg"
