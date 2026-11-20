@@ -60,7 +60,17 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _force_utf8_output() -> None:
+    # Windows consoles default to cp1252, which can't encode the arrows/dashes in our log lines.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _force_utf8_output()
     args = build_parser().parse_args(argv)
     opts = Options(
         top=args.top, min_len=args.min_len, max_len=args.max_len, lead_in=args.lead_in, tail=args.tail,
