@@ -50,8 +50,10 @@ Requires Python 3.10+ and [ffmpeg](https://ffmpeg.org/download.html) on your PAT
 
 ```bash
 git clone https://github.com/rojoze/hypecut && cd hypecut
-pip install -e ".[all]"      # yt-dlp + chat-downloader + faster-whisper
+pip install -e ".[all]"
 ```
+
+`[all]` pulls in yt-dlp, chat-downloader and faster-whisper.
 
 Minimal install (local files only, no captions): `pip install -e .`
 
