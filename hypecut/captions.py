@@ -22,17 +22,30 @@ def transcribe(audio_path: str | Path, model_size: str = "small", language: str 
         from faster_whisper import WhisperModel  # type: ignore
     except ImportError as e:
         raise RuntimeError("Captions need faster-whisper: pip install 'hypecut[captions]'") from e
-    if model_size not in _model_cache:
-        _model_cache[model_size] = WhisperModel(model_size, device="auto", compute_type="int8")
-    model = _model_cache[model_size]
-    segments, _ = model.transcribe(str(audio_path), word_timestamps=True, language=language, vad_filter=True)
-    words: list[Word] = []
-    for seg in segments:
-        for w in seg.words or []:
-            t = w.word.strip()
-            if t:
-                words.append(Word(float(w.start), float(w.end), t))
-    return words
+
+    def run(device: str) -> list[Word]:
+        key = (model_size, device)
+        if key not in _model_cache:
+            print(f"[hypecut]   loading whisper '{model_size}' on {device} (first run downloads the model)...", flush=True)
+            _model_cache[key] = WhisperModel(model_size, device=device, compute_type="int8")
+        segments, _ = _model_cache[key].transcribe(
+            str(audio_path), word_timestamps=True, language=language, vad_filter=True
+        )
+        words: list[Word] = []
+        for seg in segments:  # lazy generator: GPU library errors surface here, not at model load
+            for w in seg.words or []:
+                t = w.word.strip()
+                if t:
+                    words.append(Word(float(w.start), float(w.end), t))
+        return words
+
+    try:
+        return run("auto")
+    except (RuntimeError, OSError) as e:
+        # "auto" picks the GPU when an NVIDIA card is present, but that fails without the CUDA
+        # libraries (e.g. "Library cublas64_12.dll is not found"). Retry on CPU.
+        print(f"[hypecut] GPU transcription unavailable ({e}); falling back to CPU", flush=True)
+        return run("cpu")
 
 
 def chunk_words(words: list[Word], max_words: int = 3, max_gap: float = 0.6, max_dur: float = 1.6) -> list[list[Word]]:
