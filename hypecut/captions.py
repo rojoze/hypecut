@@ -14,6 +14,7 @@ class Word:
 
 
 _model_cache: dict = {}
+_device = ["auto"]  # flips to "cpu" for the rest of the process once GPU transcription has failed
 
 
 def transcribe(audio_path: str | Path, model_size: str = "small", language: str | None = None) -> list[Word]:
@@ -39,12 +40,17 @@ def transcribe(audio_path: str | Path, model_size: str = "small", language: str 
                     words.append(Word(float(w.start), float(w.end), t))
         return words
 
+    if _device[0] == "cpu":
+        return run("cpu")
     try:
         return run("auto")
     except (RuntimeError, OSError) as e:
         # "auto" picks the GPU when an NVIDIA card is present, but that fails without the CUDA
-        # libraries (e.g. "Library cublas64_12.dll is not found"). Retry on CPU.
+        # libraries (e.g. "Library cublas64_12.dll is not found"). Retry on CPU, and remember it:
+        # the half-initialised GPU model must not be reused, it hangs instead of raising.
         print(f"[hypecut] GPU transcription unavailable ({e}); falling back to CPU", flush=True)
+        _model_cache.pop((model_size, "auto"), None)
+        _device[0] = "cpu"
         return run("cpu")
 
 
